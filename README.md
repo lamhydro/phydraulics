@@ -18,7 +18,7 @@ This directory contain:
 
 - `splib.py`: This is a python library with functions to calculate multiple variables related to simple pipe systems.
 
-- `spclass.py: This is a python library with classes to solve any of the three problems in simple pipe systems mentioned defore. Here the class `SimplePipes` call other classes and functions to execute the calculus. 
+- `spclass.py`: This is a python library with classes to solve any of the three problems in simple pipe systems mentioned defore. Here the class `SimplePipes` call other classes and functions to execute the calculus. 
 
 ### `test`
 
