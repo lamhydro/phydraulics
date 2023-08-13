@@ -32,7 +32,7 @@ This directory contain the following:
   - `systemPower.json`: Contain example information to estimate the system power (P) in a simple pipe system.
   - `pipeDesign.json`: Contain example information to estimate the comercial diameter (D) of a simple pipe.
 
-  All the `.json contain the same structure and information, so that, the scripts are able to indentify which of the three problems need to be solve. The structure of `.json` files is:
+  All the `.json` contain the same structure and information, so that, the scripts are able to indentify which of the three problems need to be solve. The structure of `.json` files is:
 
   
     
