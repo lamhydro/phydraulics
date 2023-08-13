@@ -1,0 +1,5 @@
+# Ignoring dirs
+/simplePipes.egg-info
+/simplePipes/__pycache__
+
+# Ignoring files
