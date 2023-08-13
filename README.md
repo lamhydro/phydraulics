@@ -28,9 +28,9 @@ This directory contain the following:
 
 - `.json` : *JSON* is friendly format to introduce information to scrips. Note that are multiple files with the  extension `.json`, these files contain information for various types of examples:
 
-  -- `designTest.json`: Contain example information to estimate the discharge (Q) transporte by a simple pipe.
-  -- `systemPower.json`: Contain example information to estimate the system power (P) in a simple pipe system.
-  -- `pipeDesign.json`: Contain example information to estimate the comercial diameter (D) of a simple pipe.
+  - `designTest.json`: Contain example information to estimate the discharge (Q) transporte by a simple pipe.
+  - `systemPower.json`: Contain example information to estimate the system power (P) in a simple pipe system.
+  - `pipeDesign.json`: Contain example information to estimate the comercial diameter (D) of a simple pipe.
 
   All the `.json contain the same structure and information, so that, the scripts are able to indentify which of the three problems need to be solve. The structure of `.json` files is:
     
