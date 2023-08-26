@@ -93,6 +93,25 @@ def hf(g,f,L,D,V):
   except ValueError:
     print("Oops!  That was no valid number.  Try again...")
 
+def L_D(L,D):
+  """
+  Relation L/D^5. It is known that hf ~ L/D^5
+  """
+  try:
+    return L/(D**5.)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def D_L(D,L):
+  """
+  Relation D^(5/2)/\sqrt(L). It is known that Q ~ D^(5/2)/\sqrt(L)
+  """
+  try:
+    return (D**(5./2))/math.sqrt(L)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+
 def he(g,K,V):
   """
   Minor loses

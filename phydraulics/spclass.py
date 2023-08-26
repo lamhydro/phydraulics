@@ -4,7 +4,7 @@ import json
 import pandas as pd
 import sys
 
-from . import splib
+from . import plib
 
 class InputData():
   """
