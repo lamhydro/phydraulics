@@ -17,7 +17,7 @@ setup(
     long_description=readme,
     author='Alejandro Morales',
     author_email='lmoralesm@unal.edu.co',
-    url='https://github.com/lamhydro/simplePipes',
+    url='https://github.com/lamhydro/phydraulics',
     license=license,
     packages=find_packages(exclude=('tests_sp','test_sep','docs'))
 )
