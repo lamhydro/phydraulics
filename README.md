@@ -1,8 +1,8 @@
-# Simple pipe sytems
+# Pipe Hydraulics 
 
 ## Aim
 
-This a repo to solve the three typical problems in pipe hydraulics:
+This a repo to solve the three typical problems for **permanent flow** in pipe hydraulics:
 
 1. **Type 1**: Revision of a simple pipe design. Here, given all the fluid, pipe and flow characteristics, **we estimate the discharte (Q)**.
 
@@ -10,83 +10,55 @@ This a repo to solve the three typical problems in pipe hydraulics:
 
 3. **Type 3**: Simple pipe design. Here, given all the fluid, pipe and flow characteristics, **we estimate the comercial diameter (D)**.
 
+for the folling pipe system:
+
+1. **Simple pipes**: This a system of one pipe where the geometry and its physical characteristics are constant.
+
+2. **Serial pipes**: This system is made up by diferent pipes conected one after one. The geometrical and physical characteristics are diferent for each pipe. There are outflows at the end of each pipe. 
+
+3. **Parallel pipes**: This system is composed for usually 2 or seldom more pipes conected in parallel between two nodes. The geometrical and physical characteristics are usually diferent for each pipe.
+
+4. **Open pipe network**: This is a system of reservoir conected by pipes and nodes. Usually, there is a reservoir that supply to downstream reservoir throuthg the pipes. Sometimes there are outflow at the nodes. 
+
 ## Structure
 
-### `simplePipes`
+### `phydraulics`
 
-This directory contain:
+This directory contains:
 
-- `splib.py`: This is a python library with functions to calculate multiple variables related to simple pipe systems.
+- `plib.py`: This is a python library with functions to calculate multiple variables related to pipe systems.
 
-- `spclass.py`: This is a python library with classes to solve any of the three problems in simple pipe systems mentioned defore. Here the class `SimplePipes` call other classes and functions to execute the calculus. 
+- `spclass.py`: This is a python library with classes to solve any of the three problems in **simple pipe** systems mentioned defore. Here the class `SimplePipes` call other classes and functions to execute the calculus. 
 
-### `test`
+- `sepclass.py`: This is a python library with classes to solve any of the three problems in **serial pipe systems** mentioned defore. Here the class `SerialPipes` call other classes and functions to execute the calculus. 
 
-This directory contain the following:
+- `ppclass.py`: This is a python library with classes to solve any of the three problems in **parallel pipe systems** mentioned defore. Here the class `ParallelPipes` call other classes and functions to execute the calculus. 
 
-- `main.py`: This is the python script that call the class `SimplePipes` in `/simplePipes/spclass.py` which solves the problem.
+- `opnclass.py`: This is a python library with classes to solve problem type 1 and type 2 in **open pipe networks** mentioned defore. Here the class `OpenPipesNet` call other classes and functions to execute the calculus. 
 
-- `.json` : *JSON* is a friendly format to introduce information to scripts. Note that are multiple files with the  extension `.json`, these files contain information for various types of examples:
 
-  - `designTest.json`: Contain example information to estimate the discharge (Q) transporte by a simple pipe.
-  - `systemPower.json`: Contain example information to estimate the system power (P) in a simple pipe system.
-  - `pipeDesign.json`: Contain example information to estimate the comercial diameter (D) of a simple pipe.
+There are some directories named as `test_*`, that have the following structure:
 
-  All the `.json` contain the same structure and information, so that, the scripts are able to indentify which of the three problems need to be solve. The structure of `.json` files is:
+-  [tests_sp](./tests_sp/README.md)
 
-   `"US"`:
-    Unit measure system. It can be egual to `"IS"` (International system) or  `"BG"` (English system). [*mandatory*]
+-  [tests_sep](./tests_sep/README.md)
 
-   `"IM"`:
-    Iteration method to resolve the Colebrook-White equation for **f**. It can be egual to `"fp"` (fixed point) or  `"nr"` (Newton-Raphson numerical method). [*mandatory*]
-    
-   `"ks"`:
-    Roughtness of the pipe material. It is given in  `"IS"` or `"BG"`. [*mandatory*]
+-  [tests_pp](./tests_pp/README.md)
 
-   `"rho"`:
-    Fluid density. It is given in  `"IS"` or `"BG"`. [*mandatory*]
+-  [tests_opn](./tests_opn/README.md)
 
-   `"mu"`:
-    Fluid dynamic viscosity. It is given in  `"IS"` or `"BG"`. If this one is not given (equal `""`), it is estimated based on the  `"rho"` and `"nu"`.
-
-   `"nu"`:
-    Fluid dynamic viscosity. It is given in  `"IS"` or `"BG"`. 
-
-   `"Q"`:
-    Flow discharge. It is given in  `"IS"` or `"BG"`. It is not given for problem **type 1** (`designTest.json`).
-
-   `"Pu"`:
-    Python data estructure call *dictionary*. This contains information related to a pumb: `"P"` is the pump power, `"h"` is the pump head and `"ef"` is the pump eficiency. If neither `"P"` nor `"h"` are given they are set egual to `""`. `"ef"` is egual to 1 if no value is given. If `"P"` is given, the software estimates `"h"` internally. If `"P"` is not given and `"Q"` and `"D"` were given, this means you need to solve problem **type 2** (`systemPower.json`). The three data are  given in  `"IS"` or `"BG"`. [*mandatory*] 
-
-   `"Tu"`:
-    Python data estructure call *dictionary*. This contains information related to a turbine: `"P"` is the turbine power, `"h"` is the turbine head and `"ef"` is the turbine eficiency. If neither `"P"` nor `"h"` are given they are set egual to `""`. `"ef"` is egual to 1 if no value is given. If `"P"` is given, the software estimates `"h"` internally and set it negative. The three data are  given in  `"IS"` or `"BG"`. [*mandatory*] 
-
-   `"D"`:
-    Real pipe diameter. It is given in  `"IS"` or `"BG"`. It is not given for problem **type 3** (`pipeDesign.json`).
-
-   `"E1"`:
-    Python data estructure call *dictionary*. This contains information related to flow energy at section 1 (entrance) acording to Bernoulli energy equation: `"z"` is the potential energy head, `"p"` is the preassure energy head and `"v"` is the kinematic energy head. If any of them are not given, it must be set equal to 0. The total energy at section 1 is calculated internally. The three data are  given in  `"IS"` or `"BG"`. [*mandatory*] 
-
-   `"E2"`:
-    Python data estructure call *dictionary*. This contains information related to flow energy at section 2 (end) acording to Bernoulli energy equation: `"z"` is the potential energy head, `"p"` is the preassure energy head and `"v"` is the kinematic energy head. If any of them are not given, it must be set equal to 0. The total energy at section 2 is calculated internally. The three data are  given in  `"IS"` or `"BG"`. [*mandatory*] 
-
-   `"L"`:
-    Pipe length. It is given in  `"IS"` or `"BG"`. [*mandatory*] 
-
-   `"K"`:
-    List of accesory loss coefficients. The software add them up internally. [*mandatory*] 
 
 ## How to execute it
 1. Clone the repo as
 
-  `git clone git@github.com:lamhydro/simplePipes.git`
+  `git clone git@github.com:lamhydro/phydraulics.git`
 
-2. Go into `simplePipes/test` directory:
+2. For example, go into `phydraulics/test_sp` (Simple pipes) directory:
 
-  `cd simplePipes/test`
+  `cd phydraulics/test_sp`
 
 3. Execute the code as (e.g.):
 
   `./main.py designTest.json`
 
-  Here `main.py` reads the `designTest.json` file and resolve problem **type 1**.
+  Here `main.py` reads the `designTest.json` file and resolve problem **type 1** for simple pipes.

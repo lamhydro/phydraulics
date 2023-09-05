@@ -21,7 +21,7 @@ class InputData():
 
     # Set kinematic viscosity
     if self._data['nu'] != '':
-      self._data['mu'] = splib.mu(self._data['rho'],self._data['nu'])
+      self._data['mu'] = plib.mu(self._data['rho'],self._data['nu'])
       
     # Set the type of the problem
     self._setType()
@@ -48,7 +48,7 @@ class InputData():
     Set h of a pumb
     """
     if self._data['Pu']['P'] != '' and self._data['Q'] != '':
-      self._data['Pu']['h'] = splib.head(self._data['Pu']['ef'], self._data['Q'], self._data['Pu']['P'], self._g, self._data['rho']) 
+      self._data['Pu']['h'] = plib.head(self._data['Pu']['ef'], self._data['Q'], self._data['Pu']['P'], self._g, self._data['rho']) 
     else:
       self._data['Pu']['h'] = 0.
 
@@ -57,7 +57,7 @@ class InputData():
     Set h of a turbine
     """
     if self._data['Tu']['P'] != '' and self._data['Q'] != '':
-      self._data['Tu']['h'] = -1.*splib.head(self._data['Tu']['ef'], self._data['Q'], self._data['Tu']['P'], self._g, self._data['rho']) 
+      self._data['Tu']['h'] = -1.*plib.head(self._data['Tu']['ef'], self._data['Q'], self._data['Tu']['P'], self._g, self._data['rho']) 
     else:
       self._data['Tu']['h'] = 0.
   
@@ -89,7 +89,7 @@ class InputData():
     """
     Set the gravity constant
     """
-    self._g = splib.gravity(self._data['US'])
+    self._g = plib.gravity(self._data['US'])
 
   def getGravity(self):
     """
@@ -148,9 +148,9 @@ class SimplePipes():
     Estimate de velocity/discharge
     """
     if self._data['IM'] == 'fp':
-      self._res = splib.f_fp2(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._E1, self._E2, self._data['Pu']['h'], self._data['Tu']['h'], self._data['L'], self._SK)
+      self._res = plib.f_fp2(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._E1, self._E2, self._data['Pu']['h'], self._data['Tu']['h'], self._data['L'], self._SK)
     elif self._data['IM'] == 'nr': 
-      self._res = splib.f_nr2(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._E1, self._E2, self._data['Pu']['h'], self._data['Tu']['h'], self._data['L'], self._SK)
+      self._res = plib.f_nr2(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._E1, self._E2, self._data['Pu']['h'], self._data['Tu']['h'], self._data['L'], self._SK)
    
     # Set variables 
     self._V = self._res['V']
@@ -158,13 +158,13 @@ class SimplePipes():
     self._hf = self._res['hfrl'][-1]
 
     # Estimate accesory losses
-    self._het = splib.he(self._g,self._SK,self._V)
+    self._het = plib.he(self._g,self._SK,self._V)
 
     # Discharge estimation
-    self._Q =  splib.Qc(self._V, self._data['D']) 
+    self._Q =  plib.Qc(self._V, self._data['D']) 
 
     # Get flow regime
-    self._fr = splib.flowRegime(self._data['rho'], self._data['mu'], self._data['D'], self._V)
+    self._fr = plib.flowRegime(self._data['rho'], self._data['mu'], self._data['D'], self._V)
 
     # Printing results
     self.printIter_designTest()
@@ -205,28 +205,28 @@ class SimplePipes():
     """
     
     # Calculate de velocity
-    self._V = splib.Vc(self._data['Q'], self._data['D'])
+    self._V = plib.Vc(self._data['Q'], self._data['D'])
     
     # Estimate he
-    self._het = splib.he(self._g, self._SK, self._V)
+    self._het = plib.he(self._g, self._SK, self._V)
 
     # Estimate f
     if self._data['IM'] == 'fp':
-      self._fdic = splib.f_fp(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._V)
+      self._fdic = plib.f_fp(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._V)
     elif self._data['IM'] == 'nr': 
-      self._fdic = splib.f_nr(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._V)
+      self._fdic = plib.f_nr(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._V)
     
     # Estimate hf
-    self._hf = splib.hf(self._g, self._fdic['f'], self._data['L'], self._data['D'], self._V)
+    self._hf = plib.hf(self._g, self._fdic['f'], self._data['L'], self._data['D'], self._V)
 
     # Total head energy deliver by a pumb from Bernoulli equation
-    self._Ht = splib.HPu(self._E1, self._E2, self._het, self._hf, self._data['Tu']['h'])
+    self._Ht = plib.HPu(self._E1, self._E2, self._het, self._hf, self._data['Tu']['h'])
 
     # Nominal system power
-    self._P = splib.pot(self._data['US'], self._data['Pu']['ef'], self._data['Q'], self._Ht, self._g, self._data['rho'])
+    self._P = plib.pot(self._data['US'], self._data['Pu']['ef'], self._data['Q'], self._Ht, self._g, self._data['rho'])
     
     # Get flow regime
-    self._fr = splib.flowRegime(self._data['rho'], self._data['mu'], self._data['D'], self._V)
+    self._fr = plib.flowRegime(self._data['rho'], self._data['mu'], self._data['D'], self._V)
 
     # Printing results
     self.printIter_systemPower()
@@ -279,19 +279,19 @@ class SimplePipes():
     for self._D, self._data['D'] in CD.items():
       self._data['D'] *= 0.001 
       if self._data['IM'] == 'fp':
-        self._res = splib.f_fp2(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._E1, self._E2, self._data['Pu']['h'], self._data['Tu']['h'], self._data['L'], self._SK)
+        self._res = plib.f_fp2(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._E1, self._E2, self._data['Pu']['h'], self._data['Tu']['h'], self._data['L'], self._SK)
       elif self._data['IM'] == 'nr': 
-        self._res = splib.f_nr2(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._E1, self._E2, self._data['Pu']['h'], self._data['Tu']['h'], self._data['L'], self._SK)
+        self._res = plib.f_nr2(self._g, self._data['ks'], self._data['rho'], self._data['mu'], self._data['D'], self._E1, self._E2, self._data['Pu']['h'], self._data['Tu']['h'], self._data['L'], self._SK)
       # Set variables 
       self._V = self._res['V']
       self._f = self._res['f']
       self._hf = self._res['hfrl'][-1]
 
       # Estimate accesory losses
-      self._het = splib.he(self._g,self._SK,self._V)
+      self._het = plib.he(self._g,self._SK,self._V)
 
       # Discharge estimation
-      self._Q =  splib.Qc(self._V, self._data['D']) 
+      self._Q =  plib.Qc(self._V, self._data['D']) 
       testQ = self._Q >= self._data['Q']
        
       self._table.append([self._data['D']*1000., self._Q, testQ, self._f, self._het, self._hf])
@@ -300,7 +300,7 @@ class SimplePipes():
         break
 
     # Get flow regime
-    self._fr = splib.flowRegime(self._data['rho'], self._data['mu'], self._data['D'], self._V)
+    self._fr = plib.flowRegime(self._data['rho'], self._data['mu'], self._data['D'], self._V)
 
     # Printing results
     self.printIter_pipeDesign()
