@@ -16,9 +16,11 @@ for the folling pipe system:
 
 2. **Serial pipes**: This system is made up by diferent pipes conected one after one. The geometrical and physical characteristics are diferent for each pipe. There are outflows at the end of each pipe. 
 
-3. **Parallel pipes**: This system is composed for usually 2 or seldom more pipes conected in parallel between two nodes. The geometrical and physical characteristics are usually diferent for each pipe.
+3. **Porous pipes**: This system is made up by a pipe that discharge water per unit length. It is very common in irrigation systems and the problem here is to calculate the energy loss through the pipe.
 
-4. **Open pipe network**: This is a system of reservoir conected by pipes and nodes. Usually, there is a reservoir that supply to downstream reservoir throuthg the pipes. Sometimes there are outflow at the nodes. 
+4. **Parallel pipes**: This system is composed for usually 2 or seldom more pipes conected in parallel between two nodes. The geometrical and physical characteristics are usually diferent for each pipe.
+
+5. **Open pipe network**: This is a system of reservoir conected by pipes and nodes. Usually, there is a reservoir that supply to downstream reservoir throuthg the pipes. Sometimes there are outflow at the nodes. 
 
 ## Structure
 
@@ -32,6 +34,8 @@ This directory contains:
 
 - `sepclass.py`: This is a python library with classes to solve any of the three problems in **serial pipe systems** mentioned defore. Here the class `SerialPipes` call other classes and functions to execute the calculus. 
 
+- `popclass.py`: This is a python library with classes to calculate the energy losses in **porous pipes** mentioned defore. Here the class `PorousPipes` call other classes and functions to execute the calculus. 
+
 - `ppclass.py`: This is a python library with classes to solve any of the three problems in **parallel pipe systems** mentioned defore. Here the class `ParallelPipes` call other classes and functions to execute the calculus. 
 
 - `opnclass.py`: This is a python library with classes to solve problem type 1 and type 2 in **open pipe networks** mentioned defore. Here the class `OpenPipesNet` call other classes and functions to execute the calculus. 
@@ -42,6 +46,8 @@ There are some directories named as `test_*`, that have the following structure:
 -  [tests_sp](./tests_sp/README.md)
 
 -  [tests_sep](./tests_sep/README.md)
+
+-  [tests_pop](./tests_pop/README.md)
 
 -  [tests_pp](./tests_pp/README.md)
 

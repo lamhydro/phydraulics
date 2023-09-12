@@ -4,7 +4,9 @@ import math
 
 # Global variables
 ERROR=1.e-6 # error for iteration convergency
-Fi=0.001     # seed value of friction factor f
+Fi=0.01     # seed value of friction factor f
+REc=2000    # Critical Reynolds number (when flow becomes laminar)
+DLe=0.2     # Lenght at the en of a porous pipe where f becomes infinite
 
 def ks_d(ks,d):
   """
@@ -224,6 +226,46 @@ def f_dw(g, hf, L, D, V):
   except ValueError:
     print("Oops!  That was no valid number.  Try again...")
 
+def f_L(rho, mu, D, V):
+  """
+  Estimation of friction factor for laminar flow
+  """
+  try:
+    return 64./Re(rho, mu, D, V)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+
+
+def f_fpT(g, ks, rho, mu, D, V):
+  """
+  Estimation of the friction factor using the fix point iteration method in the Colebrook-White equation, turbulen flow
+  """
+
+  try:
+    # Calculate the Re
+    Rey = Re(rho, mu, D, V)
+    f = Fi # Initialize f
+    fl = []
+    diffl = []
+    while True:
+      fl.append(f)
+      # Estimate f2
+      d1 = ks/(3.7*D)
+      d2 = 2.51/(Rey*math.sqrt(f))
+      f2 = (-2.*math.log10(d1+d2))**(-2.)
+  
+      diff = f2-f
+      diffl.append(diff)
+      if abs(diff)<=ERROR:
+        break
+      f = f2
+    
+    return {'f':f, 'f_list':fl, 'df':diffl}    
+      
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
 
 def f_fp(g, ks, rho, mu, D, V):
   """
@@ -235,7 +277,7 @@ def f_fp(g, ks, rho, mu, D, V):
     Rey = Re(rho, mu, D, V)
     
     if Rey <= 2200:
-      return 64./Rey
+      return {'f':64./Rey, 'f_list':[], 'df':[]}    
     else:
       f = Fi # Initialize f
       fl = []
@@ -292,6 +334,46 @@ def f_fp2(g, ks, rho, mu, D, E1, E2, hp, ht, L, SK):
   except ValueError:
     print("Oops!  That was no valid number.  Try again...")
 
+def f_nrT(g, ks, rho, mu, D, V):
+  """
+  Estimation of the friction factor using the Newton-Raphson  method in the Colebrook-White equation.
+  """
+
+  try:
+    # Calculate the Re
+    Rey = Re(rho, mu, D, V)
+    f = Fi # Initialize f
+    x = 1./math.sqrt(f)
+    fl = []
+    diffl = []
+    while True:
+      fl.append(f)
+      # Estimate fx
+      d1 = ks/(3.7*D)
+      d2 = 2.51*x/Rey
+      fx = -2.*math.log10(d1+d2)
+
+      # Estimate dfx 
+      d1 = ks/(3.7*D)
+      d2 = 2.51*x/Rey
+      d3 = 2.51/Rey
+      dfx = (-2/math.log(10))*(d3/(d1+d2))
+
+      # Newton-Raphson
+      x2 = x - (fx - x)/(dfx - 1)
+
+      diff = x2-x
+      diffl.append(diff)
+      if abs(diff)<=ERROR:
+        break
+      x = x2
+      f = 1./(x**2)
+    
+    return {'f':f, 'f_list':fl, 'df':diffl}    
+      
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
 
 def f_nr(g, ks, rho, mu, D, V):
   """
@@ -303,7 +385,7 @@ def f_nr(g, ks, rho, mu, D, V):
     Rey = Re(rho, mu, D, V)
     
     if Rey <= 2200:
-      return 64./Rey
+      return {'f':64./Rey, 'f_list':[], 'df':[]}    
     else:
       f = Fi # Initialize f
       x = 1./math.sqrt(f)
@@ -383,6 +465,53 @@ def f_nr2(g, ks, rho, mu, D, E1, E2, hp, ht, L, SK):
     print("Oops!  That was no valid number.  Try again...")
 
 
+def entranceDischarge(q, L):
+  """
+  Estimation of the entrance discharge in a porous pipe
+  """
+  try:
+    return q*L
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def criticalDischarge(D,nu):
+  """
+  Estimation of the critical discharge (when flow becomes laminar) in a porous pipe
+  """
+  try:
+    return math.pi*REc*D*nu/4.
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def criticalDistance(Qc, Q, L):
+  """
+  Lenght from the end of the pipe when flow becomes laminar in a porous pipe
+  """
+  try:
+    return Qc*L/Q
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def hf_porousPipe(g, D, f, Q, q, l):
+  """
+  Estimation of the energy loss in a porous pipe
+  """
+  try:
+    return ((8.*f)/(g*(math.pi**2)*(D**5)))*((Q**2)*l - Q*(l**2)*q + ((q**2)*(l**3)/3.))
+    #return ((8.*f)/(g*(D**5)))*((Q1**2)*L - Q1*(L**2)*q + ((q**2)*(L**3)/3.))
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+def dischargeToDistance(q, L, x):
+  """
+  Estimation of discharge for certain distance in a porous pipe
+  """
+  try:
+    return q*(L-x)
+  except ValueError:
+    print("Oops!  That was no valid number.  Try again...")
+
+
 def gravity(US):
   """
   Return the gravity acceleration depend on the unit system
@@ -396,17 +525,20 @@ def gravity(US):
 if __name__ == '__main__':
 
   g = 9.81
-  rho = 998.2
-  ks = 1.5e-6
-  D = 0.293
+  rho = 1.937
+  ks = 8.5e-4
+  D = 6/12.
   E2=0
   E1 = 43.5
   hb = 0
   ht = 0
-  mu = 1.005e-3
+  mu = 2.09e-5
   L = 730
   SK = 11.8
+  V = 3*12*12*4/(math.pi*6*6)
 
+  fl = f_fp(g, ks, rho, mu, D, V)
+  print('here',fl) 
   
   res = f_fp2(g, ks, rho, mu, D, E1, E2, hb, ht, L, SK)
   print(res)
