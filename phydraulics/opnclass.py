@@ -40,7 +40,7 @@ class InputData():
     self._getConnectToNode()
 
     # Get initial node altitude
-    self._getInitialZNode()
+    #self._getInitialZNode()
  
     # Get the initial in and out pipes in nodes
     self._getNodeInOutPipe()
@@ -108,6 +108,7 @@ class InputData():
     """
     self._inoutN = {}
 
+    print(self._resCoN)
     for key, value in self._resCoN.items():
       pin = []
       pout = []
@@ -117,12 +118,12 @@ class InputData():
           if (self._data['P'+str(j)]['S'] == key and self._data['P'+str(j)]['E'] == i) or (self._data['P'+str(j)]['E'] == key and self._data['P'+str(j)]['S'] == i):
             break
         if 'N' in i:
-          if self._data[i]['z'] >= self._data[key]['z']:
+          if self._data[i]['z'] >= self._data[key]['z'] + self._data['P'+str(j)]['Pu']['h']:
             pin.append('P'+str(j))
           else:
             pout.append('P'+str(j))
         else:
-          if self._data[i]['z'] >= self._data[key]['z']:
+          if self._data[i]['z'] >= self._data[key]['z'] + self._data['P'+str(j)]['Pu']['h']:
             pin.append('P'+str(j))
           else:
             pout.append('P'+str(j))
@@ -182,23 +183,29 @@ class InputData():
 #            break
 #      self._resCoN['N'+str(i)] = resN  
 
-  def _getInitialZNode(self):
-    """
-    Get the initial altitude of nodes
-    """
-    for key, value in self._resCoN.items():
-      zs = []
-      for i in value:
-        if 'N' not in i:
-          zs.append(self._data[i]["z"])
-
-      if key == 'N1':
-        zss = sorted(zs, reverse=True)
-        zss = zss[:-1]
-        self._data[key]['z'] = sum(zss)/len(zss)
-      else:
-        self._data[key]['z'] = max(zs) + 0.3*((sum(zss)/len(zss))-max(zs))
-
+#  def _getInitialZNode(self):
+#    """
+#    Get the initial altitude of nodes
+#    """
+#    for key, value in self._resCoN.items():
+#      zs = []
+#      for i in value:
+#        if 'N' not in i:
+#          zs.append(self._data[i]["z"])
+#
+#      hps = []
+#      for j in range(1,self._npipes+1):
+#        if key in self._data['P'+str(j)]['S']:
+#          hps.append(self._data['P'+str(j)]['Pu']['h'])
+#
+#      if key == 'N1':
+#        zss = sorted(zs, reverse=True)
+#        zss = zss[:-1]
+#        self._data[key]['z'] = sum(zss)/len(zss) - sum(hps)/len(hps)
+#      else:
+#        self._data[key]['z'] = max(zs) + 0.3*((sum(zss)/len(zss))-max(zs)) + sum(hps)/len(hps)
+#
+#    #sys.exit()
 
   def _setGravity(self):
     """
@@ -244,7 +251,7 @@ class OpenPipeNet():
       if (self._data['P'+str(i)]['S'] == node or self._data['P'+str(i)]['E'] == node):
           stat = self._data['P'+str(i)]['S']
           endd = self._data['P'+str(i)]['E']
-          if self._data[stat]['z'] < self._data[endd]['z']:
+          if self._data[stat]['z'] + self._data['P'+str(i)]['Pu']['h'] < self._data[endd]['z']:
             self._data['P'+str(i)]['S'] = endd
             self._data['P'+str(i)]['E'] = stat
             
@@ -337,14 +344,14 @@ class OpenPipeNet():
         for key, value in Qin.items():
           Qins += value 
           if Hin[key] != 0.:
-            Qire += value/(Hin[key])
+            Qire += value/abs(Hin[key])
         ## For pipes out
         Qouts = 0
         Qore = 0
         for key, value in Qout.items():
           Qouts += value 
           if Hout[key] != 0.:
-            Qore += value/(Hout[key])
+            Qore += value/abs(Hout[key])
         Dzf['N'+str(i)] = 2*(Qins-Qouts-self._data['N'+str(i)]['Q'])/(Qire+Qore)
         
         # Correct node head
@@ -374,9 +381,7 @@ class OpenPipeNet():
     Estimation of pipe diameter in open pipe network
     """
 
-    print(self._data['N1']['z'], self._data['N2']['z'])
-    #self._data['N1']['z'] = 120
-    #self._data['N2']['z'] = 120-1
+    #print(self._data)
     # Diametros comerciales
     CD={'2':50.8,'2.5':63.5,'3':76.2,'4':101.6,'6':152.4,'8':203.2,'10':254,'12':304.8,'14':355.6,'16':406.4,'18':457.2,'20':508.0,'24':609.6,'30':762.0,'36':914.4}   
 
@@ -386,6 +391,7 @@ class OpenPipeNet():
       Dzi['N'+str(i)] = 100.
 
     # Loop throught up to convergencie
+    #print(self._inoutN)
     itera = 1
     while True:
       Dzf = {}
@@ -412,6 +418,8 @@ class OpenPipeNet():
               res = self._data[k]['E']
               Hout[k] = self._data['N'+str(i)]['z'] - self._data[res]['z']
         
+        #print(Hin)
+        #print(Hout)
         # Loop to estimate the pipe in discharges
         Qin={}
         Vin={}
@@ -485,22 +493,25 @@ class OpenPipeNet():
         for key, value in Qin.items():
           Qins += value 
           if Hin[key] != 0.:
-            Qire += value/(Hin[key])
+            Qire += value/abs(Hin[key])
         ## For pipes out
         Qouts = 0
         Qore = 0
         for key, value in Qout.items():
           Qouts += value 
           if Hout[key] != 0.:
-            Qore += value/(Hout[key])
+            Qore += value/abs(Hout[key])
         Dzf['N'+str(i)] = 2*(Qins-Qouts-self._data['N'+str(i)]['Q'])/(Qire+Qore)
         
         # Correct node head
+        #print(Dzf['N'+str(i)])
         self._data['N'+str(i)]['z'] += Dzf['N'+str(i)]
+        #print(self._data['N'+str(i)]['z'])
 
         # Get the in and out pipes to nodes
         InputData._getNodeInOutPipe(self)
 
+        #print(self._data)
         # Set the start and end point of pipes
         self.getStarEndPipes('N'+str(i))
 
@@ -517,5 +528,7 @@ class OpenPipeNet():
       
       itera += 1 
 
+      #if itera == 3:
+      #  sys.exit()
 
 

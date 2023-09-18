@@ -4,7 +4,7 @@ import math
 
 # Global variables
 ERROR=1.e-6 # error for iteration convergency
-Fi=0.01     # seed value of friction factor f
+Fi=0.0001     # seed value of friction factor f
 REc=2000    # Critical Reynolds number (when flow becomes laminar)
 DLe=0.2     # Lenght at the en of a porous pipe where f becomes infinite
 
