@@ -4,6 +4,8 @@ import json
 import pandas as pd
 import sys
 import math
+import matplotlib.pyplot as plt
+import numpy as np
 
 from . import plib
 
@@ -204,7 +206,9 @@ class ParallelPipes():
     print(pd.DataFrame(list(zip(hf,V,Q,he,f,Re)), columns=['hf', 'V', 'Q','he','f','Re'], index=["P{:d}".format(x) for x in range(1,self._npipes+1)]))
     print('Qt = %8.4f m³/s' % self._data['Q'])
 
-   
+    # Plotting energy line and hydraulic gradient line
+    self.plotGHLandEL(hf,V,he)
+
   def systemPower(self):
     """
     Estimate the system power in parallel pipes. Estimate the presure in the upstream or downstream node.
@@ -299,6 +303,8 @@ class ParallelPipes():
       print("Pressure in node 2 = %8.2f (Pa)" % (self._E2*self._g*self._data['rho']))
       
 
+    # Plotting energy line and hydraulic gradient line
+    self.plotGHLandEL(hf,V,he)
 
   def pipeDesign(self):
     """
@@ -426,3 +432,57 @@ class ParallelPipes():
       j += 1
 
     print('Energy head at node 2 = %8.4f (m)' % self._E2)
+
+    # Plotting energy line and hydraulic gradient line
+    self.plotGHLandEL(hf,V,he)
+
+  def plotGHLandEL(self,hf,V,he):
+    """
+    Plot the hydraulic gradient line and the energy line
+    """
+
+    xc = {}
+    el = {}
+    hgl = {}
+
+    for i in range(1,self._npipes+1):
+      
+      # Data for pipe entrance
+      xci = [0]
+      eli = [self._E1]
+      hgli =[eli[0]-(V[0]**2)/(2*self._g)] 
+      xci.append(0)
+      eli.append(eli[0]-he[i-1]*0.5)
+      hgli.append(hgli[0]-he[i-1]*0.5)
+      
+      # Data for pipe end
+      xci.append(self._data['P'+str(i)]['L'])
+      eli.append(eli[1]-hf[i-1])
+      hgli.append(hgli[1]-hf[i-1])
+      xci.append(self._data['P'+str(i)]['L'])
+      eli.append(eli[2]-he[i-1]*0.5)
+      hgli.append(hgli[2]-he[i-1]*0.5)
+      
+      xc['P'+str(i)] = xci
+      el['P'+str(i)] = eli
+      hgl['P'+str(i)] = hgli
+
+    # Plots
+    plt.figure(figsize=(8,4))
+    for i,j in zip(range(1,self._npipes+1),['-','-.',':','--']):
+      xci = np.array(xc['P'+str(i)])
+      eli = np.array(el['P'+str(i)])
+      hgli = np.array(hgl['P'+str(i)])
+      plt.plot(xci,eli, j, color='red', label='Energy line for pipe '+str(i), linewidth=0.5)
+      plt.plot(xci,eli, '.', color='red')
+      plt.plot(xci,hgli, j, color='blue', label='Hydraulic gradient line for pipe '+str(i), linewidth=0.5)
+      plt.plot(xci,hgli, '.', color='blue')
+      plt.grid(linestyle = '--', linewidth = 0.5)
+    if self._data['US'] == 'IS':
+      plt.xlabel("Pipe lenght (m)")
+      plt.ylabel("Head (m)")
+    else:
+      plt.xlabel("Pipe lenght (ft)")
+      plt.ylabel("Head (ft)")
+    plt.legend()
+    plt.show()

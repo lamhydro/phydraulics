@@ -4,6 +4,8 @@ import json
 import pandas as pd
 import sys
 import math
+import matplotlib.pyplot as plt
+import numpy as np
 
 from . import plib
 
@@ -247,6 +249,8 @@ class SerialPipes():
       hf[0]+=(Ht-H)*L_D1/SL_D 
       j+=1
 
+    # Plotting energy line and hydraulic gradient line
+    self.plotGHLandEL(hf,V,he)
    
   def systemPower(self):
     """
@@ -303,6 +307,8 @@ class SerialPipes():
     print("hp = %8.2f (m)" % self._data['P1']['Pu']['h'])
     print("P = %8.2f (W)" % self._data['P1']['Pu']['P'])
 
+    # Plotting energy line and hydraulic gradient line
+    self.plotGHLandEL(hf,V,he)
 
   def pipeDesign(self):
     """
@@ -398,3 +404,52 @@ class SerialPipes():
 
       j += 1 
 
+    # Plotting energy line and hydraulic gradient line
+    self.plotGHLandEL(hf,V,he)
+
+
+  def plotGHLandEL(self,hf,V,he):
+    """
+    Plot the hydraulic gradient line and the energy line
+    """
+
+    xc = [0]
+    xca = 0
+    el = [self._E1]
+    ela = el[0]
+    hgl =[el[0]-(V[0]**2)/(2*self._g)] 
+    hgla = hgl[0]
+    for i in range(1,self._npipes+1):
+      
+      # Set the x coordinates
+      xca += self._data['P'+str(i)]['L']
+      xc.append(xca)
+      xc.append(xca)
+
+      # Set energy line
+      ela-=hf[i-1]
+      el.append(ela)
+      ela-=he[i-1]
+      el.append(ela)
+        
+      # Set hydraulic gradient line
+      hgla-=hf[i-1]
+      hgl.append(hgla)
+      hgla-=he[i-1]
+      hgl.append(hgla)
+       
+    # Plots
+    plt.figure(figsize=(8,4))
+    plt.plot(np.array(xc),np.array(el), color='red', label='Energy line', linewidth=0.5)
+    plt.plot(np.array(xc),np.array(el),'.', color='red')
+    plt.plot(np.array(xc),np.array(hgl), color='blue', label='Hydraulic gradient line', linewidth=0.5)
+    plt.plot(np.array(xc),np.array(hgl), '.', color='blue')
+    plt.grid(linestyle = '--', linewidth = 0.5)
+    if self._data['US'] == 'IS':
+      plt.xlabel("Pipe lenght (m)")
+      plt.ylabel("Head (m)")
+    else:
+      plt.xlabel("Pipe lenght (ft)")
+      plt.ylabel("Head (ft)")
+    plt.legend()
+    plt.show()
