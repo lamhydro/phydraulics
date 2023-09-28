@@ -108,7 +108,7 @@ class InputData():
     """
     self._inoutN = {}
 
-    print(self._resCoN)
+    #print(self._resCoN)
     for key, value in self._resCoN.items():
       pin = []
       pout = []

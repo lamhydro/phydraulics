@@ -289,6 +289,10 @@ class ClosePipeNet():
     self._noHfixN = InputData()._noHfixN
     self._NCoN = InputData()._NCoN
 
+
+    print(self._pipesCn)
+    print(self._NCoN)
+
     # Executing de calculation
     self.procedure()
 
@@ -310,22 +314,66 @@ class ClosePipeNet():
       print('')
       self.pipeDesign()
 
-  def getStarEndPipes(self, node):
+  def initialQinPipes_HCQ(self):
     """
-    Get the start point and end point of pipes connected to node
     """
-    for i in range(1,self._npipes+1):
-      if (self._data['P'+str(i)]['S'] == node or self._data['P'+str(i)]['E'] == node):
-          stat = self._data['P'+str(i)]['S']
-          endd = self._data['P'+str(i)]['E']
-          if self._data[stat]['z'] + self._data['P'+str(i)]['Pu']['h'] < self._data[endd]['z']:
-            self._data['P'+str(i)]['S'] = endd
-            self._data['P'+str(i)]['E'] = stat
+    ln = []
+    for i in range(1, self._nnodes+1): # Loop through nodes
+      ni = 'N'+str(i)
+      ln.append(ni)
+      Q = 0.
+      for j in range(1,self._npipes+1): # Loop through pipes
+        pi = 'P'+str(j)
+        ns = self._data[pi]['S']
+        ne = self._data[pi]['E']
+        if ni == ne:
+          if self._data[pi]['Q'] != "": 
+            Q += self._data[pi]['Q']
+      Q -=self._data[ni]['Q']
+      nls = self._NCoN[ni]
+      sl = 0
+      for kk in nls:
+        if kk not in ln:
+          sl += 1
+      if sl == 0:
+        break
+      Qn = Q/sl
+      #print(ni, Q)
+      #sys.exit()
+      for nii in self._NCoN[ni]: # Loop through nodes conected to node ni
+        if nii not in ln:
+          for j in range(1,self._npipes+1): # Loop through pipes
+            pi = 'P'+str(j)
+            ns = self._data[pi]['S']
+            ne = self._data[pi]['E']
+            if ni == ns and nii == ne:
+              if self._data[pi]['Q'] == "":
+                self._data[pi]['Q'] = Qn 
+            elif ni == ne and nii == ns:
+              if self._data[pi]['Q'] == "":
+                self._data[pi]['Q'] = -1.*Qn 
+      
+#  def getStarEndPipes(self, node):
+#    """
+#    Get the start point and end point of pipes connected to node #    """ #    for i in range(1,self._npipes+1):
+#      if (self._data['P'+str(i)]['S'] == node or self._data['P'+str(i)]['E'] == node):
+#          stat = self._data['P'+str(i)]['S']
+#          endd = self._data['P'+str(i)]['E']
+#          if self._data[stat]['z'] + self._data['P'+str(i)]['Pu']['h'] < self._data[endd]['z']:
+#            self._data['P'+str(i)]['S'] = endd
+#            self._data['P'+str(i)]['E'] = stat
             
   def designTest_HCQ(self): 
     """
     Estimate the discharges in open pipe network using the Hardy-Cross discharge correction method
     """
+
+    # Initializing the discharge in each pipe following mass conservation at nodes
+    self.initialQinPipes_HCQ()
+    for i in range(1, self._npipes+1):
+      pi = 'P'+str(i)
+      print(pi, self._data['P'+str(i)]['Q']) 
+    #sys.exit()
 
     # Loop throught up to convergencie
     itera = 1
