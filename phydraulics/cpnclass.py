@@ -136,18 +136,23 @@ class InputData():
 
   def _getPipesConNode(self):
     """
-    Get the pipes connected to nodes
+    Get the pipes in circuit connected to nodes
     """
     self._pipesCn = {}
+    self._pipesCn2 = {}
     for i in range(1,self._nnodes+1):
       pipes = []
+      pipes2 = []
       for j in range(1,self._npipes+1):
         ns = self._data['P'+str(j)]['S'] 
         ne = self._data['P'+str(j)]['E'] 
         if ns == 'N'+str(i) or ne == 'N'+str(i):
+          pipes2.append('P'+str(j))
           if 'P'+str(j) in self._pipesInC:
             pipes.append('P'+str(j))
       self._pipesCn['N'+str(i)] = pipes
+      self._pipesCn2['N'+str(i)] = pipes2
+
 
   def _getPipes(self):
     """
@@ -235,35 +240,6 @@ class InputData():
     for i in range(1,self._npipes+1):
       self._SK['P'+str(i)] = sum(self._data['P'+str(i)]['K'])   
 
-  def _getNodeInOutPipe(self):
-    """
-    Get the pipes that flow in and out of nodes
-    """
-    self._inoutN = {}
-
-    for key, value in self._resCoN.items():
-      pin = []
-      pout = []
-      pinout = {}
-      for i in value:
-        for j in range(1,self._npipes+1):
-          if (self._data['P'+str(j)]['S'] == key and self._data['P'+str(j)]['E'] == i) or (self._data['P'+str(j)]['E'] == key and self._data['P'+str(j)]['S'] == i):
-            break
-        if 'N' in i:
-          if self._data[i]['z'] >= self._data[key]['z'] + self._data['P'+str(j)]['Pu']['h']:
-            pin.append('P'+str(j))
-          else:
-            pout.append('P'+str(j))
-        else:
-          if self._data[i]['z'] >= self._data[key]['z'] + self._data['P'+str(j)]['Pu']['h']:
-            pin.append('P'+str(j))
-          else:
-            pout.append('P'+str(j))
-      pinout['in'] = pin
-      pinout['out'] = pout
-      self._inoutN[key] = pinout  
-          
-
   def _setGravity(self):
     """
     Set the gravity constant
@@ -286,11 +262,13 @@ class ClosePipeNet():
     self._pipesC = InputData()._pipesC
     self._signsC = InputData()._signsC
     self._pipesCn = InputData()._pipesCn
+    self._pipesCn2 = InputData()._pipesCn2
     self._noHfixN = InputData()._noHfixN
     self._NCoN = InputData()._NCoN
 
 
-    print(self._pipesCn)
+    print(self._pipesC)
+    print(self._pipesCn2)
     print(self._NCoN)
 
     # Executing de calculation
@@ -314,9 +292,126 @@ class ClosePipeNet():
       print('')
       self.pipeDesign()
 
+  def sumQinNodes(self):
+    """
+    """
+    Qnt = 0
+    for ni, pis in self._pipesCn2.items():
+      Qni = 0
+      for pi in pis:
+        ns = self._data[pi]['S']
+        ne = self._data[pi]['E']
+        Q = self._data[pi]['Q']
+        if Q>0.:
+          if ne == ni:
+            Qni += Q
+          else:
+            Qni -= Q
+        else:
+          if ns == ni:
+            Qni += abs(Q)
+          else:
+            Qni -= abs(Q)
+      Qni -= self._data[ni]['Q'] 
+      Qnt += abs(Qni)
+      #print(ni,Qni)
+    #print('Qnt',Qnt)
+
+    return Qnt
+
   def initialQinPipes_HCQ(self):
     """
+    Initialize pipe discharges for Hardy-Cross method with Q corrections
     """
+    for r in [rr/20 for rr in range(1,20)]:
+      ln = []
+      for i in range(1, self._nnodes+1): # Loop through nodes
+        ni = 'N'+str(i)
+        ln.append(ni)
+        Q = 0.
+        for j in range(1,self._npipes+1): # Loop through pipes
+          pi = 'P'+str(j)
+          ns = self._data[pi]['S']
+          ne = self._data[pi]['E']
+          if ni == ne:
+            if self._data[pi]['Q'] != "": 
+              Q += self._data[pi]['Q']
+          elif ni == ns:
+            if self._data[pi]['Q'] != "": 
+              if self._data[pi]['Q'] < 0.0:
+                Q += abs(self._data[pi]['Q'])
+              else:
+                Q -= self._data[pi]['Q']
+
+        Q -=self._data[ni]['Q']
+        nls = self._NCoN[ni]
+        sl = 0
+        for kk in nls:
+          if kk not in ln:
+            sl += 1
+        if sl == 0:
+          break
+        #Qn = []
+        #for ii in range(sl):
+        #  if ii == 0:
+        #    Qn.append(r*Q) 
+        #    if sl>1:
+        #      Qii = (Q-(r*Q))/(sl-1)
+        #  else:
+        #    Qn.append(Qii)
+        if ni == 'N1':
+          Qn = []
+          for ii in range(sl):
+            if ii == 0:
+              Qn.append(Q*r)
+            else:
+              Qn.append(Q*(1.-r)/(sl-1))
+        else:
+          Qn = Q/sl
+        #Qn = Q/sl
+        print('here',ni,Qn)
+        #print(ni, Q)
+        #sys.exit()
+        ii =0
+        for nii in nls: # Loop through nodes conected to node ni
+          if nii not in ln:
+            for j in range(1,self._npipes+1): # Loop through pipes
+              pi = 'P'+str(j)
+              ns = self._data[pi]['S']
+              ne = self._data[pi]['E']
+              if ni == ns and nii == ne:
+                if self._data[pi]['Q'] == "":
+                  if ni == 'N1':
+                    self._data[pi]['Q'] = Qn[ii]#Qn 
+                  else:
+                    self._data[pi]['Q'] = Qn 
+              elif ni == ne and nii == ns:
+                if self._data[pi]['Q'] == "":
+                  if ni == 'N1':
+                    self._data[pi]['Q'] = -1.*Qn[ii]#Qn 
+                  else:
+                    self._data[pi]['Q'] = -1.*Qn#Qn 
+            ii+=1
+
+        for ki in self._pipesCn2[ni]:
+          print('***',ki, self._data[ki]['Q'])
+        #sys.exit()
+
+      Qnt=self.sumQinNodes()
+      print('-------->',Qnt)
+      if Qnt<1.0e-12:
+        break
+      for i in range(1, self._npipes+1):
+        if i>1:
+          self._data['P'+str(i)]['Q']= ""
+ 
+        #print(r,Qnt)
+ 
+  def initialQinPipes_HCQ_2(self):
+    """
+    Initialize pipe discharges for Hardy-Cross method with Q corrections
+    """
+    #for r in [rr/20 for rr in range(1,20)]:
     ln = []
     for i in range(1, self._nnodes+1): # Loop through nodes
       ni = 'N'+str(i)
@@ -337,9 +432,19 @@ class ClosePipeNet():
           sl += 1
       if sl == 0:
         break
+      #Qn = []
+      #for ii in range(sl):
+      #  if ii == 0:
+      #    Qn.append(r*Q) 
+      #    if sl>1:
+      #      Qii = (Q-(r*Q))/(sl-1)
+      #  else:
+      #    Qn.append(Qii)
       Qn = Q/sl
+      #print(Qn)
       #print(ni, Q)
       #sys.exit()
+      ii =0
       for nii in self._NCoN[ni]: # Loop through nodes conected to node ni
         if nii not in ln:
           for j in range(1,self._npipes+1): # Loop through pipes
@@ -348,20 +453,22 @@ class ClosePipeNet():
             ne = self._data[pi]['E']
             if ni == ns and nii == ne:
               if self._data[pi]['Q'] == "":
-                self._data[pi]['Q'] = Qn 
+                self._data[pi]['Q'] = Qn#[ii]#Qn 
             elif ni == ne and nii == ns:
               if self._data[pi]['Q'] == "":
-                self._data[pi]['Q'] = -1.*Qn 
+                self._data[pi]['Q'] = -1.*Qn#[ii]#Qn 
+          ii+=1
       
-#  def getStarEndPipes(self, node):
-#    """
-#    Get the start point and end point of pipes connected to node #    """ #    for i in range(1,self._npipes+1):
-#      if (self._data['P'+str(i)]['S'] == node or self._data['P'+str(i)]['E'] == node):
-#          stat = self._data['P'+str(i)]['S']
-#          endd = self._data['P'+str(i)]['E']
-#          if self._data[stat]['z'] + self._data['P'+str(i)]['Pu']['h'] < self._data[endd]['z']:
-#            self._data['P'+str(i)]['S'] = endd
-#            self._data['P'+str(i)]['E'] = stat
+    Qnt=self.sumQinNodes()
+    print(Qnt)
+      #if Qnt<1.0e-8:
+      #  break
+      #for i in range(1, self._npipes+1):
+      #  if i>1:
+      #    self._data['P'+str(i)]['Q']= ""
+ 
+      #print(r,Qnt)
+       
             
   def designTest_HCQ(self): 
     """
