@@ -5,6 +5,7 @@ import pandas as pd
 import sys
 import math
 import numpy as np
+#import random
 
 from . import plib
 
@@ -266,8 +267,9 @@ class ClosePipeNet():
     self._noHfixN = InputData()._noHfixN
     self._NCoN = InputData()._NCoN
 
-
+    print(self._signsC)
     print(self._pipesC)
+    print(self._pipesCn)
     print(self._pipesCn2)
     print(self._NCoN)
 
@@ -286,6 +288,11 @@ class ClosePipeNet():
         print('Proving the design of a close pipe network: Hardy-Cross head correction method')
         print('')
         self.designTest_HCH()
+      elif self._data["ME"]=="LP":
+        print('')
+        print('Proving the design of a close pipe network: Lineal Programming method')
+        print('')
+        self.designTest_LP()
     elif self._data["PT"] ==3:
       print('')
       print('Design of a open pipe network')
@@ -369,7 +376,7 @@ class ClosePipeNet():
         else:
           Qn = Q/sl
         #Qn = Q/sl
-        print('here',ni,Qn)
+        #print('here',ni,Qn)
         #print(ni, Q)
         #sys.exit()
         ii =0
@@ -393,12 +400,12 @@ class ClosePipeNet():
                     self._data[pi]['Q'] = -1.*Qn#Qn 
             ii+=1
 
-        for ki in self._pipesCn2[ni]:
-          print('***',ki, self._data[ki]['Q'])
+        #for ki in self._pipesCn2[ni]:
+        #  print('***',ki, self._data[ki]['Q'])
         #sys.exit()
 
       Qnt=self.sumQinNodes()
-      print('-------->',Qnt)
+      #print('-------->',Qnt)
       if Qnt<1.0e-12:
         break
       for i in range(1, self._npipes+1):
@@ -407,67 +414,84 @@ class ClosePipeNet():
  
         #print(r,Qnt)
  
-  def initialQinPipes_HCQ_2(self):
+#  def initialQinPipes_HCQ_2(self):
+#    """
+#    Initialize pipe discharges for Hardy-Cross method with Q corrections
+#    """
+#    #for r in [rr/20 for rr in range(1,20)]:
+#    ln = []
+#    for i in range(1, self._nnodes+1): # Loop through nodes
+#      ni = 'N'+str(i)
+#      ln.append(ni)
+#      Q = 0.
+#      for j in range(1,self._npipes+1): # Loop through pipes
+#        pi = 'P'+str(j)
+#        ns = self._data[pi]['S']
+#        ne = self._data[pi]['E']
+#        if ni == ne:
+#          if self._data[pi]['Q'] != "": 
+#            Q += self._data[pi]['Q']
+#      Q -=self._data[ni]['Q']
+#      nls = self._NCoN[ni]
+#      sl = 0
+#      for kk in nls:
+#        if kk not in ln:
+#          sl += 1
+#      if sl == 0:
+#        break
+#      #Qn = []
+#      #for ii in range(sl):
+#      #  if ii == 0:
+#      #    Qn.append(r*Q) 
+#      #    if sl>1:
+#      #      Qii = (Q-(r*Q))/(sl-1)
+#      #  else:
+#      #    Qn.append(Qii)
+#      Qn = Q/sl
+#      #print(Qn)
+#      #print(ni, Q)
+#      #sys.exit()
+#      ii =0
+#      for nii in self._NCoN[ni]: # Loop through nodes conected to node ni
+#        if nii not in ln:
+#          for j in range(1,self._npipes+1): # Loop through pipes
+#            pi = 'P'+str(j)
+#            ns = self._data[pi]['S']
+#            ne = self._data[pi]['E']
+#            if ni == ns and nii == ne:
+#              if self._data[pi]['Q'] == "":
+#                self._data[pi]['Q'] = Qn#[ii]#Qn 
+#            elif ni == ne and nii == ns:
+#              if self._data[pi]['Q'] == "":
+#                self._data[pi]['Q'] = -1.*Qn#[ii]#Qn 
+#          ii+=1
+#      
+#    Qnt=self.sumQinNodes()
+#    print(Qnt)
+#      #if Qnt<1.0e-8:
+#      #  break
+#      #for i in range(1, self._npipes+1):
+#      #  if i>1:
+#      #    self._data['P'+str(i)]['Q']= ""
+# 
+#      #print(r,Qnt)
+
+  def initialNodeHead_HCH(self):
     """
-    Initialize pipe discharges for Hardy-Cross method with Q corrections
+    Set the initial node heads
     """
-    #for r in [rr/20 for rr in range(1,20)]:
+    Hn1 = self._data['N1']['z']
     ln = []
-    for i in range(1, self._nnodes+1): # Loop through nodes
+    for i in range(1,self._nnodes+1):
       ni = 'N'+str(i)
+      z = self._data[ni]['z']
       ln.append(ni)
-      Q = 0.
-      for j in range(1,self._npipes+1): # Loop through pipes
-        pi = 'P'+str(j)
-        ns = self._data[pi]['S']
-        ne = self._data[pi]['E']
-        if ni == ne:
-          if self._data[pi]['Q'] != "": 
-            Q += self._data[pi]['Q']
-      Q -=self._data[ni]['Q']
       nls = self._NCoN[ni]
-      sl = 0
-      for kk in nls:
-        if kk not in ln:
-          sl += 1
-      if sl == 0:
-        break
-      #Qn = []
-      #for ii in range(sl):
-      #  if ii == 0:
-      #    Qn.append(r*Q) 
-      #    if sl>1:
-      #      Qii = (Q-(r*Q))/(sl-1)
-      #  else:
-      #    Qn.append(Qii)
-      Qn = Q/sl
-      #print(Qn)
-      #print(ni, Q)
-      #sys.exit()
-      ii =0
-      for nii in self._NCoN[ni]: # Loop through nodes conected to node ni
+      for nii in nls: # Loop through nodes conected to node ni
         if nii not in ln:
-          for j in range(1,self._npipes+1): # Loop through pipes
-            pi = 'P'+str(j)
-            ns = self._data[pi]['S']
-            ne = self._data[pi]['E']
-            if ni == ns and nii == ne:
-              if self._data[pi]['Q'] == "":
-                self._data[pi]['Q'] = Qn#[ii]#Qn 
-            elif ni == ne and nii == ns:
-              if self._data[pi]['Q'] == "":
-                self._data[pi]['Q'] = -1.*Qn#[ii]#Qn 
-          ii+=1
-      
-    Qnt=self.sumQinNodes()
-    print(Qnt)
-      #if Qnt<1.0e-8:
-      #  break
-      #for i in range(1, self._npipes+1):
-      #  if i>1:
-      #    self._data['P'+str(i)]['Q']= ""
- 
-      #print(r,Qnt)
+          self._data[nii]['z']=z*0.9
+      #if i>1:
+      #  self._data['N'+str(i)]['z'] = Hn1*random.randint(80,90)/100.
        
             
   def designTest_HCQ(self): 
@@ -476,11 +500,14 @@ class ClosePipeNet():
     """
 
     # Initializing the discharge in each pipe following mass conservation at nodes
-    self.initialQinPipes_HCQ()
-    for i in range(1, self._npipes+1):
-      pi = 'P'+str(i)
-      print(pi, self._data['P'+str(i)]['Q']) 
-    #sys.exit()
+    if self._data['P'+str(self._npipes)]['Q'] == '': 
+      print('')
+      print('Initial pipe discharges in the network')
+      print('')
+      self.initialQinPipes_HCQ()
+      for i in range(1, self._npipes+1):
+        pi = 'P'+str(i)
+        print(pi, round(self._data['P'+str(i)]['Q'],3))
 
     # Loop throught up to convergencie
     itera = 1
@@ -525,7 +552,6 @@ class ClosePipeNet():
             he*=-1.
           # Total losses
           hti = hf + he - self._data[Pi]['Pu']['h']
-
   
           fl.append(f)
           Ql.append(self._data[Pi]['Q']*Si)
@@ -603,6 +629,15 @@ class ClosePipeNet():
     """
     Estimate the discharges in open pipe network using the Hardy-Cross head correction method
     """
+    # Initializing the node heads
+    if self._data['N'+str(self._nnodes)]['z'] == '': 
+      print('')
+      print('Initial node heads in the network')
+      print('')
+      self.initialNodeHead_HCH() 
+      for i in range(1, self._nnodes+1):
+        ni = 'N'+str(i)
+        print(ni, round(self._data['N'+str(i)]['z'],3))
 
     # Loop throught up to convergencie
     itera = 1
@@ -717,4 +752,164 @@ class ClosePipeNet():
       elif self._data['US'] == 'ES':
         print('Head in Node No. %d (N%d) = %8.5f (ft)' % (i,i,self._data['N'+str(i)]['z']))
 
+  def designTest_LP(self): 
+    """
+    Estimate the discharges in open pipe network using the lineal programming method
+    """
 
+    # Initializing the discharge in each pipe following mass conservation at nodes
+    if self._data['P'+str(self._npipes)]['Q'] == '': 
+      print('')
+      print('Initial pipe discharges in the network')
+      print('')
+      self.initialQinPipes_HCQ()
+      for i in range(1, self._npipes+1):
+        pi = 'P'+str(i)
+        print(pi, round(self._data['P'+str(i)]['Q'],3))
+
+    #self._data['P2']['Q'] = 0.1 
+    #self._data['P3']['Q'] = 0.1 
+    #self._data['P4']['Q'] = -0.1 
+    #self._data['P5']['Q'] = -0.1 
+    #self._data['P6']['Q'] = 0.1 
+    #self._data['P7']['Q'] = 0.1 
+    #self._data['P8']['Q'] = -0.1 
+
+    # Set the matrix of zeros
+    k = 0 
+    pl = []
+    for key, values in self._pipesC.items():
+      for j in values:
+        if j not in pl:
+          pl.append(j)
+          k+=1 
+    
+    #M = np.empty((k,k,))
+    #M[:] = np.nan
+    M = np.zeros((k,k,))
+    #C = np.empty((k,))
+    #C[:] = np.nan
+    C = np.zeros((k,))
+    #print(M)
+    #print(C)
+    #print(k)
+    #print(pl)
+    #sys.exit()
+    
+    # Loop throught up to convergencie
+    itera = 1
+    while True:
+
+      print('')
+      print('ITERATION No.: %d' % itera)
+      print('')
+
+      # Continuity equations at the nodes
+      row =0
+      for ni,pis in self._pipesCn2.items(): # Loop through pipes connected to nodes
+        if row<self._nnodes-1:
+          C[row]=self._data[ni]['Q']
+        for pi in pis:
+          ns = self._data[pi]['S']
+          ne = self._data[pi]['E']
+          if 'RE' in ns:
+            C[row]=-self._data[pi]['Q']
+          else:
+            if ni == ns:
+              if self._data[pi]['Q']>0:
+                k = -1.
+              else:
+                k = 1.
+            elif ni == ne:
+              if self._data[pi]['Q']>0:
+                k = 1.
+              else:
+                k = -1.
+            ii = int(pi.replace('P',''))
+            if row<self._nnodes-1:
+              M[row][ii-2] = k
+        row+=1 
+
+      #print(M)
+      #print(C)
+      #print(row)
+
+      # Energy conservation in the circuits
+      #kijsA_= {}
+      for i in range(1,self._ncircu+1):
+        print('-> Circuit No.: %d' % i)
+        
+        # Loop through pipes in circuit
+        #kijs_={}
+        for Pi,Si in zip(self._pipesC['C'+str(i)],self._signsC['C'+str(i)]):
+          
+          # Estimate the energy losses
+          ## Estimate velocity
+          #V = self._data[Pi]['Q']*Si/plib.Ac(self._data[Pi]['D'])
+          V = self._data[Pi]['Q']*Si/plib.Ac(self._data[Pi]['D'])
+          ## Estimate f
+          if self._data['IM'] == 'fp':
+            faux = plib.f_fp(self._g, self._data[Pi]['ks'], self._data['rho'], self._data['mu'], self._data[Pi]['D'], abs(V))
+          elif self._data['IM'] == 'nr': 
+            faux = plib.f_nr(self._g, self._data[Pi]['ks'], self._data['rho'], self._data['mu'], self._data[Pi]['D'], abs(V))
+          f = faux['f']
+          ## 
+          hfij = f*self._data[Pi]['L']/self._data[Pi]['D']
+          kij_ = self._data[Pi]['Q']*Si*(hfij+self._SK[Pi])/(2*self._g*(plib.Ac(self._data[Pi]['D'])**2.))
+          ii = int(Pi.replace('P',''))
+          M[row-1][ii-2] = kij_
+          #kijs_[Pi] = kij_
+          #hf = plib.hf(self._g, f, self._data[Pi]['L'], self._data[Pi]['D'], V)
+          #if V<0.:
+          #  kij*=-1.
+          ## Estimate he
+          #he = plib.he(self._g, self._SK[Pi], V)
+          #if V<0.:
+          #  he*=-1.
+        row+=1 
+        #kijsA_['N'+str(i)]=kijs_ 
+      #print(kijsA_)
+      #print(M)
+      #print(C)
+
+      # Matrix inversion
+      x = np.linalg.solve(M, C)
+      Qoij = {}
+      i = 0
+      for i,pi in enumerate(pl):
+        Qoij[pi] = x[i]
+        i+=1
+      print(Qoij)
+
+      accu=0
+      for pi in pl:
+        #accu += abs(abs(self._data[pi]['Q'])-Qoij[pi])
+        accu += abs(self._data[pi]['Q']-Qoij[pi])
+      print('-->',accu)
+      if accu <= plib.ERROR:
+        break
+
+      # Correcting pipe discharges
+      for pi in pl:
+        if self._data[pi]['Q']<0:
+          sig = -1. 
+        else:
+          sig = 1.
+        #self._data[pi]['Q'] = sig*0.5*(abs(self._data[pi]['Q']) + Qoij[pi])
+        self._data[pi]['Q'] = Qoij[pi]
+        #self._data[pi]['Q'] = 0.5*(abs(self._data[pi]['Q']) + Qoij[pi])
+        #print(pi,self._data[pi]['Q'])
+      #sys.exit()
+      
+      itera +=1
+      #if itera>40:
+      #  break
+      #sys.exit()
+    # Summary of discharges
+    print('Summmary of discharges')
+    for i in range(1,self._npipes+1):
+      if self._data['US'] == 'IS':
+        print('Discharge in Pipe No. %d (P%d) = %8.5f (l/s)' % (i,i,self._data['P'+str(i)]['Q']*1000.))
+      elif self._data['US'] == 'ES':
+        print('Discharge in Pipe No. %d (P%d) = %8.5f (ft³/s)' % (i,i,self._data['P'+str(i)]['Q']))
+ 
