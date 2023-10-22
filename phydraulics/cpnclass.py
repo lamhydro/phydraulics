@@ -883,8 +883,8 @@ class ClosePipeNet():
 
       accu=0
       for pi in pl:
-        #accu += abs(abs(self._data[pi]['Q'])-Qoij[pi])
-        accu += abs(self._data[pi]['Q']-Qoij[pi])
+        accu += abs(abs(self._data[pi]['Q'])-Qoij[pi])
+        #accu += abs(self._data[pi]['Q']-Qoij[pi])
       print('-->',accu)
       if accu <= plib.ERROR:
         break
@@ -895,8 +895,8 @@ class ClosePipeNet():
           sig = -1. 
         else:
           sig = 1.
-        #self._data[pi]['Q'] = sig*0.5*(abs(self._data[pi]['Q']) + Qoij[pi])
-        self._data[pi]['Q'] = Qoij[pi]
+        self._data[pi]['Q'] = sig*0.5*(abs(self._data[pi]['Q']) + Qoij[pi])
+        #self._data[pi]['Q'] = Qoij[pi]
         #self._data[pi]['Q'] = 0.5*(abs(self._data[pi]['Q']) + Qoij[pi])
         #print(pi,self._data[pi]['Q'])
       #sys.exit()
